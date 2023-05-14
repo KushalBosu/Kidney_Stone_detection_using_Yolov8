@@ -1,0 +1,7 @@
+path:  /home/mechanical/kushal/Kidney_Stone_detection_using_Yolov8/datasets
+train: images/train
+val: images/validation
+test: #optional
+
+names:
+  0: KIDNEY_STONE
