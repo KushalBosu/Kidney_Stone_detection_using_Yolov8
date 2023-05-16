@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>YOLOv8 Object Detection</title>
+    <title>Kidney Stone Detection</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,30 +20,65 @@
             margin-top: 20px;
         }
 
-        #uploadInput {
+        .upload-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             margin-bottom: 20px;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .upload-button:hover {
+            background-color: #45a049;
         }
 
         canvas {
             display: block;
             border: 1px solid black;
+           
             margin-top: 10px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-    </style>
+box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+.message {
+        text-align: center;
+        margin-top: 20px;
+        font-weight: bold;
+    }
+
+    .patient-name {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+</style>
 </head>
 <body>
     <h1>Kidney Stone Detection</h1>
     <div class="container">
-        <input id="uploadInput" type="file" />
-        <canvas></canvas>
+        <div class="upload-container">
+            <input id="uploadInput" class="upload-input" type="file" accept="image/*" />
+            <label for="uploadInput" class="upload-button">Upload Image</label>
+        </div>
+        <canvas id="canvas"></canvas>
     </div>
+    <div class="message" id="message"></div>
+    <div id="patientName" class="patient-name"></div>
     <script>
-        /**
-         * "Upload" button onClick handler: uploads selected
-         * image file to backend, receives an array of
-         * detected objects and draws them on top of the image
-         */
         const input = document.getElementById("uploadInput");
         input.addEventListener("change", async (event) => {
             const file = event.target.files[0];
@@ -53,39 +88,49 @@
                 method: "post",
                 body: data
             });
-            const boxes = await response.json();
-            draw_image_and_boxes(file, boxes);
-        })
-
-        /**
-         * Function draws the image from the provided file
-         * and bounding boxes of detected objects on top of the image
-         * @param file Uploaded file object
-         * @param boxes Array of bounding boxes in the format
-         * [[x1, y1, x2, y2, object_type, probability], ...]
-         */
-        function draw_image_and_boxes(file, boxes) {
-            const img = new Image()
+            const responseData = await response.json();
+            drawImageAndBoxes(file, responseData);
+            setPatientName(getFileNameWithoutExtension(file.name)); // Set patient name without file extension
+        });
+    
+        function drawImageAndBoxes(file, responseData) {
+            const img = new Image();
             img.src = URL.createObjectURL(file);
             img.onload = () => {
-                const canvas = document.querySelector("canvas");
+                const canvas = document.getElementById("canvas");
                 canvas.width = img.width;
                 canvas.height = img.height;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0);
                 ctx.strokeStyle = "#00FF00";
-                ctx.lineWidth = 3;
-                ctx.font = "18px Arial";
-                boxes.forEach(([x1, y1, x2, y2, label]) => {
+                ctx.lineWidth = 2;
+                responseData.boxes.forEach(([x1, y1, x2, y2]) => {
                     ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-                    ctx.fillStyle = "#00FF00";
-                    const width = ctx.measureText(label).width;
-                    ctx.fillRect(x1, y1, width + 10, 25);
-                    ctx.fillStyle = "#000000";
-                    ctx.fillText(label, x1, y1 + 18);
                 });
+    
+                const messageElement = document.getElementById("message");
+                if (responseData.kidney_stones_detected) {
+                    messageElement.textContent = "Kidney stones detected!";
+                    messageElement.style.color = "red";
+                } else {
+                    messageElement.textContent = "No kidney stone detected.";
+                    messageElement.style.color = "blue";
+                }
             }
         }
+    
+        function setPatientName(patientName) {
+            const patientNameElement = document.getElementById("patientName");
+            patientNameElement.textContent = `Patient Name: ${patientName}`;
+        }
+    
+        function getFileNameWithoutExtension(fileName) {
+            return fileName.replace(/\.[^/.]+$/, "");
+        }
     </script>
+    
 </body>
 </html>
+
+
+
